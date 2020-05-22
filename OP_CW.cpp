@@ -3,12 +3,17 @@
 
 using namespace std;
 
+double* Jacobi(double** A, double* B, double* X, int size, double diff);
+int** getNullM(int rows, int cols);
+void deleteM(int** Matrx, int rows);
+
 int main()
 {
-    std::cout << "Hello World!\n";
+	int size;
+	double diff;
 }
 
-void Jacobi( double** A,  double* B,  double* X,int size,double diff)
+double* Jacobi( double** A,  double* B,  double* X,int size,double diff) //Need to test with double X as B
 {
 	double* tempX = new double[size];
 	double norm;
@@ -30,4 +35,25 @@ void Jacobi( double** A,  double* B,  double* X,int size,double diff)
 		}
 	} while (norm > diff);
 	delete[] tempX;
+}
+int** getNullM(int rows,int cols)
+{
+	int** res = new int*[rows];
+	for (int i = 0; i < rows; i++)
+	{
+		res[i] = new int[cols];
+		for (int j = 0; j < cols; j++)
+		{
+			res[i][j] = 0;
+		}
+	}
+	return res;
+}
+void deleteM(int** Matrx,int rows)
+{
+	for (int i = 0; i < rows; i++)
+	{
+		delete[] Matrx[i];
+	}
+	delete[] Matrx;
 }
