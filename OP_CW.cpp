@@ -1,10 +1,166 @@
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 using namespace std;
 
-double* Jacobi(double** A, double* B, int size, double diff);
-double* G_Z(double** A, double* B, int size, double diff);
+class LinEquasSys
+{
+	double** Acoef;
+	double* Bcoef;
+	double* Result;
+	int size;
+	void clearABR()
+	{
+		if (Acoef != nullptr)
+		{
+			for (int i = 0; i < size; i++)
+			{
+				delete[] Acoef[i];
+			}
+			delete[] Acoef;
+		}
+		if (Bcoef != nullptr)
+		{
+			delete[] Bcoef;
+		}
+		if (Result != nullptr)
+		{
+			delete[] Result;
+		}
+		size = 0;
+	}
+	void Jacobi(double diff)
+	{
+		if (Result == nullptr)
+			Result = new double[size];
+
+		for (int i = 0; i < size; i++)
+		{
+			Result[i] = Bcoef[i];
+		}
+		double* tempX = new double[size];
+		double norm;
+
+		do
+		{
+			for (int i = 0; i < size; i++)
+			{
+				tempX[i] = Result[i];
+				for (int j = 0; j < size; j++)
+				{
+					if (i != j)
+						tempX[i] -= Acoef[i][j] * Result[j];
+				}
+				tempX[i] /= Acoef[i][i];
+			}
+			norm = fabs(Result[0] - tempX[0]);
+			for (int i = 0; i < size; i++)
+			{
+				if (fabs(Result[i] - tempX[i]) > norm)
+					norm = fabs(Result[i] - tempX[i]);
+				Result[i] = tempX[i];
+			}
+		} while (norm > diff);
+		delete[] tempX;
+	}
+	void G_Z(double diff)
+	{
+		if(Result==nullptr)
+			Result = new double[size];
+
+		for (int i = 0; i < size; i++)
+		{
+			Result[i] = Bcoef[i];
+		}
+		double* tempX = new double[size];
+		double norm;
+
+		do {
+			for (int i = 0; i < size; i++) {
+				tempX[i] = Result[i];						//tempx(newX)=Old X
+				for (int j = 0; j < size; j++) {
+					if (i != j)
+						tempX[i] -= Acoef[i][j] * tempX[j];	// As we go we use the new parameters
+				}
+				tempX[i] /= Acoef[i][i];
+			}
+			norm = fabs(Result[0] - tempX[0]);
+			for (int i = 0; i < size; i++) {
+				if (fabs(Result[i] - tempX[i]) > norm)
+					norm = fabs(Result[i] - tempX[i]);
+				Result[i] = tempX[i];
+			}
+		} while (norm > diff);
+		delete[] tempX;
+	}
+public:
+	LinEquasSys()
+	{
+		Acoef = nullptr;
+		Bcoef = nullptr;
+		Result = nullptr;
+		size = 0;
+	}
+	~LinEquasSys()
+	{
+		clearABR();
+	}
+	void setEquasion(double** A,double* B, int cur_size)
+	{
+		clearABR();
+		size = cur_size;
+		//									New A and B coef
+		Acoef = new double* [size];
+		Bcoef = new double[size];
+		//									Applying new data
+		for (int i = 0; i < size; i++)				
+		{
+			Acoef[i] = new double[size];
+			Bcoef[i] = B[i];
+			for (int j = 0; j < size; j++)
+			{
+				Acoef[i][j] = A[i][j];
+			}
+		}	  
+	}
+	void doMath(int method,double accuracy=0.001)
+	{
+		switch (method)
+		{
+		case 1:
+			Jacobi(accuracy);
+			break;
+		case 2:
+			G_Z(accuracy);
+			break;
+		case 3:
+			//Gradient(accuracy...
+			break;
+		default:
+			break;
+		}
+	}
+	vector<double> getResult()
+	{
+		vector<double> get;
+		if(Result!=nullptr)
+		{
+			for (int i = 0; i < size; i++)
+			{
+				get.push_back(Result[i]);
+			}
+			return get;
+		}
+		else
+		{
+			cout << "Error! Results are unavalible, because no calculations has been done!" << endl;
+			get.push_back(0);
+			return get;
+		}
+	}
+};
+
 int** getNullM(int rows, int cols);
 void deleteM(int** Matrx, int rows);
 
@@ -64,68 +220,4 @@ void zeroFix(int** A,int* B,int size)
 			}
 		}
 	}
-}
-
-
-double* Jacobi( double** A,  double* B,int size,double diff) //Need to test with double X as B
-{
-	double* X = new double[size];
-	for (int i = 0; i < size; i++)
-	{
-		X[i] = B[i];
-	}
-	double* tempX = new double[size];
-	double norm;
-
-	do 
-	{
-		for (int i = 0; i < size; i++) 
-		{
-			tempX[i] = X[i];
-			for (int j = 0; j < size; j++) 
-			{
-				if (i != j)
-					tempX[i] -= A[i][j] * X[j];
-			}
-			tempX[i] /= A[i][i];
-		}
-		norm = fabs(X[0] - tempX[0]);
-		for (int i = 0; i < size; i++) 
-		{
-			if (fabs(X[i] - tempX[i]) > norm)
-				norm = fabs(X[i] - tempX[i]);
-			X[i] = tempX[i];
-		}
-	} while (norm > diff);
-	delete[] tempX;
-	return X;
-}
-double* G_Z(double** A, double* B,  int size, double diff) //Need to test with double X as B
-{
-	double* X = new double[size];
-	for (int i = 0; i < size; i++)
-	{
-		X[i] = B[i];
-	}
-	double* tempX = new double[size];
-	double norm;
-
-	do {
-		for (int i = 0; i < size; i++) {
-			tempX[i] = X[i];						//tempx(newX)=Old X
-			for (int j = 0; j < size; j++) {
-				if (i != j)
-					tempX[i] -= A[i][j] * tempX[j];	// As we go we use the new parameters
-			}
-			tempX[i] /= A[i][i];
-		}
-		norm = fabs(X[0] - tempX[0]);
-		for (int i = 0; i < size; i++) {
-			if (fabs(X[i] - tempX[i]) > norm)
-				norm = fabs(X[i] - tempX[i]);
-			X[i] = tempX[i];
-		}
-	} while (norm > diff);
-	delete[] tempX;
-	return X;
 }
