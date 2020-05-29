@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <cmath>
 #include <vector>
 
@@ -94,6 +94,99 @@ class LinEquasSys
 		} while (norm > diff);
 		delete[] tempX;
 	}
+	void Gradient(){}
+	bool zeroIJ()
+	{
+		for (int i = 0; i < size; i++)
+		{
+			if (Acoef[i][i] == 0)
+				return true;
+		}
+		return false;
+	}
+	void zeroFix()
+	{
+		for (int iter = 0; iter < size; iter++)						//Run through matrix
+		{
+			if (Acoef[iter][iter] == 0)								//If there is 0  on [i][i]
+			{
+				for (int i = 0; i < size; i++)						//Look for another row
+				{
+					if (Acoef[i][iter] != 0)						//That does not have zero on required position
+					{
+						for (int j = 0; j < size; j++)				//Add it's coef to initial row
+						{
+							Acoef[iter][j] += Acoef[i][j];
+						}
+						Bcoef[iter] += Bcoef[i];					//And the ...=B(i)
+						break;										//End
+					}
+				}
+			}
+		}
+	}
+	void getMatrixWithoutRowAndCol(double** matrix, int _size, int row, int col, double** newMatrix) {
+		int offsetRow = 0; //Смещение индекса строки в матрице
+		int offsetCol = 0; //Смещение индекса столбца в матрице
+		for (int i = 0; i < _size - 1; i++) {
+			//Пропустить row-ую строку
+			if (i == row) {
+				offsetRow = 1; //Как только встретили строку, которую надо пропустить, делаем смещение для исходной матрицы
+			}
+
+			offsetCol = 0; //Обнулить смещение столбца
+			for (int j = 0; j < _size - 1; j++) {
+				//Пропустить col-ый столбец
+				if (j == col) {
+					offsetCol = 1; //Встретили нужный столбец, проускаем его смещением
+				}
+
+				newMatrix[i][j] = matrix[i + offsetRow][j + offsetCol];
+			}
+		}
+	}
+	double matrixDet(double** matrix, int _size) {
+		double det = 0;
+		int degree = 1; // (-1)^(1+j) из формулы определителя
+
+		//Условие выхода из рекурсии
+		if (_size == 1) {
+			return matrix[0][0];
+		}
+		//Условие выхода из рекурсии
+		else if (_size == 2) {
+			return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+		}
+		else {
+			//Матрица без строки и столбца
+			double** newMatrix = new double* [_size - 1];
+			for (int i = 0; i < _size - 1; i++) {
+				newMatrix[i] = new double[_size - 1];
+			}
+
+			//Раскладываем по 0-ой строке, цикл бежит по столбцам
+			for (int j = 0; j < _size; j++) {
+				//Удалить из матрицы i-ю строку и j-ый столбец
+				//Результат в newMatrix
+				getMatrixWithoutRowAndCol(matrix, _size, 0, j, newMatrix);
+
+				//Рекурсивный вызов
+				//По формуле: сумма по j, (-1)^(1+j) * matrix[0][j] * minor_j (это и есть сумма из формулы)
+				//где minor_j - дополнительный минор элемента matrix[0][j]
+				// (напомню, что минор это определитель матрицы без 0-ой строки и j-го столбца)
+				det = det + (degree * matrix[0][j] * matrixDet(newMatrix, _size - 1));
+				//"Накручиваем" степень множителя
+				degree = -degree;
+			}
+
+			//Чистим память на каждом шаге рекурсии(важно!)
+			for (int i = 0; i < _size - 1; i++) {
+				delete[] newMatrix[i];
+			}
+			delete[] newMatrix;
+		}
+		return det;
+	}
 public:
 	LinEquasSys()
 	{
@@ -138,10 +231,11 @@ public:
 			//Gradient(accuracy...
 			break;
 		default:
+			//WRONG
 			break;
 		}
 	}
-	vector<double> getResult()
+	vector<double> getvectorResult()
 	{
 		vector<double> get;
 		if(Result!=nullptr)
@@ -159,10 +253,16 @@ public:
 			return get;
 		}
 	}
+	void CheckFixDiagonals()
+	{
+		if (zeroIJ())
+			zeroFix();
+	}
+	double getDet()
+	{
+		return matrixDet(Acoef, size);
+	}
 };
-
-int** getNullM(int rows, int cols);
-void deleteM(int** Matrx, int rows);
 
 int main()
 {
@@ -170,54 +270,3 @@ int main()
 	double diff;
 }
 
-int** getNullM(int rows, int cols)
-{
-	int** res = new int* [rows];
-	for (int i = 0; i < rows; i++)
-	{
-		res[i] = new int[cols];
-		for (int j = 0; j < cols; j++)
-		{
-			res[i][j] = 0;
-		}
-	}
-	return res;
-}
-void deleteM(int** Matrx, int rows)
-{
-	for (int i = 0; i < rows; i++)
-	{
-		delete[] Matrx[i];
-	}
-	delete[] Matrx;
-}
-bool zeroIJ(int** Matrx,int size)
-{
-	for (int i = 0; i < size; i++)
-	{
-		if (Matrx[i][i] == 0)
-			return true;
-	}
-	return false;
-}
-void zeroFix(int** A,int* B,int size)
-{
-	for (int iter = 0; iter < size; iter++)			//Run through matrix
-	{
-		if(A[iter][iter]==0)						//If there is 0  on [i][i]
-		{
-			for (int i = 0; i < size; i++)			//Look for another row
-			{
-				if(A[i][iter]!=0)					//That does not have zero on required position
-				{
-					for (int j = 0; j < size; j++)	//Add it's coef to initial row
-					{
-						A[iter][j] += A[i][j];
-					}
-					B[iter] += B[i];				//And the ...=B(i)
-					break;							//End
-				}
-			}
-		}
-	}
-}
