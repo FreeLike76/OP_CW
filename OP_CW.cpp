@@ -2,8 +2,11 @@
 #include <cmath>
 #include <vector>
 #include <fstream>
+#define _PATH "input.txt"
 
 using namespace std;
+
+
 
 class LinEquasSys
 {
@@ -47,7 +50,7 @@ class LinEquasSys
 		{
 			for (int i = 0; i < size; i++)
 			{
-				tempX[i] = Result[i];
+				tempX[i] = Bcoef[i];
 				for (int j = 0; j < size; j++)
 				{
 					if (i != j)
@@ -79,7 +82,7 @@ class LinEquasSys
 
 		do {
 			for (int i = 0; i < size; i++) {
-				tempX[i] = Result[i];						//tempx(newX)=Old X
+				tempX[i] = Bcoef[i];
 				for (int j = 0; j < size; j++) {
 					if (i != j)
 						tempX[i] -= Acoef[i][j] * tempX[j];	// As we go we use the new parameters
@@ -95,7 +98,78 @@ class LinEquasSys
 		} while (norm > diff);
 		delete[] tempX;
 	}
-	void Gradient(){}
+	void conj_grad(double diff)
+	{
+		if (Result == nullptr)
+			Result = new double[size];	//Result== Xk	(original)
+
+		double* Zk = new double[size];
+		double* Rk = new double[size];
+		double* Sz = new double[size];
+		double Spr, Spr1, Spz, alpha, beta, mf;
+		int i, j, kl = 1;
+		double max_iter = 100000;
+
+		/* Вычисляем сумму квадратов элементов вектора F*/
+		for (mf = 0, i = 0; i < size; i++) {
+			mf += Bcoef[i] * Bcoef[i];
+		}
+
+		/* Задаем начальное приближение корней. В Result хранятся значения корней
+		 * к-й итерации. */
+		for (i = 0; i < size; i++) {
+			Result[i] = 0.2;
+		}
+
+		/* Задаем начальное значение r0 и z0. */
+		for (i = 0; i < size; i++) {
+			for (Sz[i] = 0, j = 0; j < size; j++)
+				Sz[i] += Acoef[i][j] * Result[j];
+			Rk[i] = Bcoef[i] - Sz[i];
+			Zk[i] = Rk[i];
+		}
+
+		int Iteration = 0;
+
+		do {
+			Iteration++;
+			/* Вычисляем числитель и знаменатель для коэффициента
+			 * alpha = (rk-1,rk-1)/(Azk-1,zk-1) */
+			Spz = 0;
+			Spr = 0;
+			for (i = 0; i < size; i++) {
+				for (Sz[i] = 0, j = 0; j < size; j++) {
+					Sz[i] += Acoef[i][j] * Zk[j];
+				}
+				Spz += Sz[i] * Zk[i];
+				Spr += Rk[i] * Rk[i];
+			}
+			alpha = Spr / Spz;             /*  alpha    */
+
+
+			/* Вычисляем вектор решения: xk = xk-1+ alpha * zk-1,
+			вектор невязки: rk = rk-1 - alpha * A * zk-1 и числитель для beta равный (rk,rk) */
+			Spr1 = 0;
+			for (i = 0; i < size; i++) {
+				Result[i] += alpha * Zk[i];
+				Rk[i] -= alpha * Sz[i];
+				Spr1 += Rk[i] * Rk[i];
+			}
+			kl++;
+
+			/* Вычисляем  beta  */
+			beta = Spr1 / Spr;
+
+			/* Вычисляем вектор спуска: zk = rk+ beta * zk-1 */
+			for (i = 0; i < size; i++)
+				Zk[i] = Rk[i] + beta * Zk[i];
+		}
+		/* Проверяем условие выхода из итерационного цикла  */
+		while (Spr1 / mf > diff* diff&& Iteration < max_iter);
+		delete[] Zk;
+		delete[] Rk;
+		delete[] Sz;
+	}
 	bool zeroIJ()
 	{
 		for (int i = 0; i < size; i++)
@@ -229,7 +303,7 @@ public:
 			G_Z(accuracy);
 			break;
 		case 3:
-			//Gradient(accuracy...
+			conj_grad(accuracy);
 			break;
 		default:
 			//WRONG
@@ -284,15 +358,39 @@ public:
 		}
 		return true;
 	}
+	void coutAB()
+	{
+		for (int i = 0; i < size; i++)
+		{
+			for (int j = 0; j < size; j++)
+			{
+				cout << Acoef[i][j] << '\t';
+			}
+			cout << "=   " << Bcoef[i]<<endl;
+		}
+	}
+	void coutRes()
+	{
+		for (int i = 0; i < size; i++)
+		{
+			cout << Result[i] << endl;
+		}
+	}
 };
+
+bool readLESff(LinEquasSys &cur, string path);
 
 int main()
 {
 	int size;
 	double diff;
 	LinEquasSys test;
+	readLESff(test, _PATH);
+	test.coutAB();
+	test.doMath(3);
+	test.coutRes();
 }
-bool readLESff(LinEquasSys cur,string path)
+bool readLESff(LinEquasSys &cur,string path)
 {
 	ifstream input(path);
 	if (!input.is_open())
@@ -321,6 +419,4 @@ bool readLESff(LinEquasSys cur,string path)
 		cur.setEquasion(A, B, _size);
 		input.close();
 	}
-
-
 }
