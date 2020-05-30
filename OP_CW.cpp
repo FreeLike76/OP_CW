@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <cmath>
 #include <vector>
+#include <fstream>
 
 using namespace std;
 
@@ -262,11 +263,64 @@ public:
 	{
 		return matrixDet(Acoef, size);
 	}
+	bool is_semetrical()
+	{
+		for (int i = 0; i < size; i++)
+		{
+			for (int j = 0; j < size; j++)
+			{
+				if (Acoef[i][j] != Acoef[j][i])
+					return false;
+			}
+		}
+		return true;
+	}
+	bool is_positive()
+	{
+		for (int i = 1; i <= size; i++)
+		{
+			if (matrixDet(Acoef, i) <= 0)
+				return false;
+		}
+		return true;
+	}
 };
 
 int main()
 {
 	int size;
 	double diff;
+	LinEquasSys test;
 }
+bool readLESff(LinEquasSys cur,string path)
+{
+	ifstream input(path);
+	if (!input.is_open())
+		return false;
+	else
+	{
+		//Reading size
+		int _size;
+		input >> _size;
+		//Creating A and B
+		double ** A= new double* [_size];
+		for (int i = 0; i < _size; i++)
+		{
+			A[i] = new double[_size];
+		}
+		double* B = new double[_size];
+		//Reading A and B
+		for (int i = 0; i < _size; i++)
+		{
+			for (int j = 0; j < _size; j++)
+			{
+				input >> A[i][j];
+			}
+			input >> B[i];
+		}
+		cur.setEquasion(A, B, _size);
+		input.close();
+	}
 
+
+}
