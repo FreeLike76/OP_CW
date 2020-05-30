@@ -376,6 +376,43 @@ public:
 			cout << Result[i] << endl;
 		}
 	}
+	bool readLESff(string path)
+	{
+		ifstream input(path);
+		if (!input.is_open())
+			return false;
+		else
+		{
+			//Reading size
+			int _size;
+			input >> _size;
+			//Creating A and B
+			double** A = new double* [_size];
+			for (int i = 0; i < _size; i++)
+			{
+				A[i] = new double[_size];
+			}
+			double* B = new double[_size];
+			//Reading A and B
+			for (int i = 0; i < _size; i++)
+			{
+				for (int j = 0; j < _size; j++)
+				{
+					input >> A[i][j];
+				}
+				input >> B[i];
+			}
+			this->setEquasion(A, B, _size);
+			input.close();
+			for (int i = 0; i < _size; i++)
+			{
+				delete[] A[i];
+			}
+			delete[] A;
+			delete[] B;
+			return true;
+		}
+	}
 };
 
 bool readLESff(LinEquasSys &cur, string path);
@@ -389,34 +426,4 @@ int main()
 	test.coutAB();
 	test.doMath(3);
 	test.coutRes();
-}
-bool readLESff(LinEquasSys &cur,string path)
-{
-	ifstream input(path);
-	if (!input.is_open())
-		return false;
-	else
-	{
-		//Reading size
-		int _size;
-		input >> _size;
-		//Creating A and B
-		double ** A= new double* [_size];
-		for (int i = 0; i < _size; i++)
-		{
-			A[i] = new double[_size];
-		}
-		double* B = new double[_size];
-		//Reading A and B
-		for (int i = 0; i < _size; i++)
-		{
-			for (int j = 0; j < _size; j++)
-			{
-				input >> A[i][j];
-			}
-			input >> B[i];
-		}
-		cur.setEquasion(A, B, _size);
-		input.close();
-	}
 }
