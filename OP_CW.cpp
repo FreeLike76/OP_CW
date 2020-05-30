@@ -413,10 +413,29 @@ public:
 			return true;
 		}
 	}
+	bool dominDiag()
+	{
+		int row;
+		for (int i = 0; i < size; i++)
+		{
+			row = 0;
+			for (int j = 0; j < size; j++)
+			{
+				if (i != j)
+					row += fabs(Acoef[i][j]);
+			}
+			if (fabs(Acoef[i][i]) < row)
+				return false;
+		}
+		return true;
+	}
 };
 
 
 int main()
 {
-	
+	string path = "input.txt";
+	LinEquasSys test;
+	test.readLESff(path);
+	cout<<test.dominDiag();
 }
