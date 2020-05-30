@@ -415,15 +415,8 @@ public:
 	}
 };
 
-bool readLESff(LinEquasSys &cur, string path);
 
 int main()
 {
-	int size;
-	double diff;
-	LinEquasSys test;
-	readLESff(test, _PATH);
-	test.coutAB();
-	test.doMath(3);
-	test.coutRes();
+	
 }
